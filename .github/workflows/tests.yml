@@ -1,4 +1,8 @@
- Test_Add:
+name: Test_Add
+on: push
+jobs:
+  Test_Add:
+ 
     runs-on: ubuntu-latest
     needs: Compilation
     steps:
