@@ -1,63 +1,56 @@
+
 name: Automatisation des tests
 
-on: push
+on: [push, pull_request]
 
 jobs:
   Compilation:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Compilation
         run: |
-          mkdir -p build
-          cd build
-          cmake ..
-          make
-          make test
+          cmake -S . -B build
+          cmake --build build --parallel 4
 
   Test_Add:
     runs-on: ubuntu-latest
     needs: Compilation
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Build
-        run: |
-          mkdir -p build
-          cd build
-          cmake ..
-          make
+        run: cmake -S . -B build && cmake --build build --parallel 4
+      - name: Test addition
+        run: ctest --test-dir build -R '^t1$' --output-on-failure
 
-      - name: Run test "add" and capture report
-        run: |
-          cd build
-          echo "== Test add 10 5 ==" > report.txt
-          set +e
-          ./src/calculator add 10 5 | tee -a report.txt
-          status=${PIPESTATUS[0]}
-          echo "Exit code: $status" >> report.txt
-          exit "$status"
+  Test_Div:
+    runs-on: ubuntu-latest
+    needs: Compilation
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cmake -S . -B build && cmake --build build --parallel 4
+      - name: Test division
+        run: ctest --test-dir build -R '^t4$' --output-on-failure
 
-      - name: Upload report as artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-add-report
-          path: build/report.txt
-          retention-days: 14
+  Test_Mul:
+    runs-on: ubuntu-latest
+    needs: Compilation
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cmake -S . -B build && cmake --build build --parallel 4
+      - name: Test multiplication
+        run: ctest --test-dir build -R '^t3$' --output-on-failure
 
-      - name: Job summary
-        if: always()
-        run: |
-          echo "### Résultat du test add" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f build/report.txt ]; then
-            cat build/report.txt >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Le rapport n'a pas été généré." >> "$GITHUB_STEP_SUMMARY"
-          fi
+  Test_Sub:
+    runs-on: ubuntu-latest
+    needs: Compilation
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cmake -S . -B build && cmake --build build --parallel 4
+      - name: Test soustraction
+        run: ctest --test-dir build -R '^t2$' --output-on-failure
